@@ -66,7 +66,7 @@ void ff_upsample_base_layer_frame_sse_h(struct AVFrame *FrameEL, struct AVFrame 
     int rightEndL  = FrameEL->width - Enhscal->right_offset;
 
     if(1 ) {
-        const int32_t* coeff;
+        int32_t* coeff;
         int i,j;
         uint8_t buffer[8];
         uint8_t *srcBufY = FrameBL->data[0]+(start*strideBL);
@@ -75,7 +75,7 @@ void ff_upsample_base_layer_frame_sse_h(struct AVFrame *FrameEL, struct AVFrame 
         uint8_t *srcY;
         short *dstY1;
         for( i = 0; i < widthEL; i++ )	{
-            int x = av_clip(i, leftStartL, rightEndL);
+            int x = av_clip_c(i, leftStartL, rightEndL);
             refPos16 = (((x - leftStartL)*up_info->scaleXLum + up_info->addXLum) >> 12);
             phase    = refPos16 & 15;
             refPos   = refPos16 >> 4;
@@ -139,7 +139,7 @@ void ff_upsample_base_layer_frame_sse_h(struct AVFrame *FrameEL, struct AVFrame 
         
         start = channel * CTB/2;
 
-        const int32_t* coeff;
+        int32_t* coeff;
         int i,j;
         uint8_t buffer[8];
         strideBL  = FrameBL->linesize[1];
@@ -165,7 +165,7 @@ void ff_upsample_base_layer_frame_sse_h(struct AVFrame *FrameEL, struct AVFrame 
         
         //========== horizontal upsampling ===========
         for( i = 0; i < widthEL; i++ )	{
-            int x = av_clip(i, leftStartC, rightEndC - 1);
+            int x = av_clip_c(i, leftStartC, rightEndC - 1);
             refPos16 = (((x - leftStartC)*up_info->scaleXCr + up_info->addXCr) >> 12);
             phase    = refPos16 & 15;
             refPos   = refPos16 >> 4;
@@ -272,7 +272,7 @@ void ff_upsample_base_layer_frame_sse_v(struct AVFrame *FrameEL, struct AVFrame 
     r15= _mm_set1_epi32(iOffset);
 
     if(1) {
-        const int32_t* coeff;
+        int32_t* coeff;
         
         
         int i,j, k;
@@ -289,7 +289,7 @@ void ff_upsample_base_layer_frame_sse_v(struct AVFrame *FrameEL, struct AVFrame 
         
         
         for( j = 0; j < heightEL; j++ )	{
-            int y = av_clip(j, topStartL, bottomEndL-1);
+            int y = av_clip_c(j, topStartL, bottomEndL-1);
             refPos16 = ((( y - topStartL )*up_info->scaleYLum + up_info->addYLum) >> 12);
             phase    = refPos16 & 15;
             refPos   = refPos16 >> 4;
@@ -453,7 +453,7 @@ void ff_upsample_base_layer_frame_sse_v(struct AVFrame *FrameEL, struct AVFrame 
     }
     if( 1 ) {
         
-        const int32_t* coeff;
+        int32_t* coeff;
         int i,j, k;
         
         short buffer1[8];
@@ -763,7 +763,7 @@ void ff_upsample_base_layer_frame_sse(struct AVFrame *FrameEL, struct AVFrame *F
    // printf("nShift %d iOffset %d \n", nShift, iOffset);
     r15= _mm_set1_epi32(iOffset);
     if(1 ) {
-        const int32_t* coeff;
+        int32_t* coeff;
       
     
         int i,j, k;
@@ -1007,7 +1007,7 @@ void ff_upsample_base_layer_frame_sse(struct AVFrame *FrameEL, struct AVFrame *F
     }
     if( 1 ) {
        
-        const int32_t* coeff;
+        int32_t* coeff;
         int i,j, k;
         uint8_t buffer[8];
         short buffer1[8];

@@ -331,12 +331,6 @@ void ff_hevc_sao_band_filter_2_8_sse(uint8_t *_dst, uint8_t *_src,
 
     init_x = -(8 >> chroma) - 2;
     width = (8 >> chroma) + 2;	//width < 16
-    if (!chroma)
-        mask = _mm_set_epi8(0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-                            -1);
-    else
-        mask = _mm_set_epi8(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1, -1, -1, -1,
-                            -1);
     if (!borders[3])
         height -= ((4 >> chroma) + 2);
 

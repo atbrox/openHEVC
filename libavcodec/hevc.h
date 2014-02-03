@@ -58,8 +58,6 @@
 
 #define MAX_TB_SIZE 32
 #define MAX_PB_SIZE 64
-#define MAX_EDGE_BUFFER_SIZE    ((MAX_PB_SIZE + 8) * (MAX_PB_SIZE+8) * 2)
-#define MAX_EDGE_BUFFER_STRIDE  ((MAX_PB_SIZE+8) * 2)
 #define MAX_LOG2_CTB_SIZE 6
 #define MAX_QP 51
 #define DEFAULT_INTRA_TC_OFFSET 2
@@ -814,25 +812,18 @@ typedef struct HEVCNAL {
 } HEVCNAL;
 
 typedef struct HEVCLocalContext {
-    GetBitContext gb;
-    CABACContext cc;
-    TransformTree tt;
-    TransformUnit tu;
-    CodingTree ct;
-    CodingUnit cu;
-    PredictionUnit pu;
-    NeighbourAvailable na;
-
-    uint8_t edge_emu_buffer[MAX_EDGE_BUFFER_SIZE];
-
     uint8_t cabac_state[HEVC_CONTEXTS];
 
     uint8_t first_qp_group;
 
+    GetBitContext gb;
+    CABACContext cc;
+    TransformTree tt;
 
     int8_t qp_y;
     int8_t curr_qp_y;
 
+    TransformUnit tu;
 
     uint8_t ctb_left_flag;
     uint8_t ctb_up_flag;
@@ -841,6 +832,12 @@ typedef struct HEVCLocalContext {
     int     start_of_tiles_x;
     int     end_of_tiles_x;
     int     end_of_tiles_y;
+    uint8_t *edge_emu_buffer;
+    int      edge_emu_buffer_size;
+    CodingTree ct;
+    CodingUnit cu;
+    PredictionUnit pu;
+    NeighbourAvailable na;
 
     uint8_t slice_or_tiles_left_boundary;
     uint8_t slice_or_tiles_up_boundary;
@@ -854,7 +851,14 @@ typedef struct HEVCContext {
 
     HEVCLocalContext    *HEVClcList[MAX_NB_THREADS];
     HEVCLocalContext    *HEVClc;
+
+    uint8_t             threads_type;
+    uint8_t             threads_number;
+
     uint8_t *cabac_state;
+
+    /** 1 if the independent slice segment header was successfully parsed */
+    uint8_t slice_initialized;
 
     AVFrame *frame;
     AVFrame *sao_frame;
@@ -871,13 +875,12 @@ typedef struct HEVCContext {
     AVBufferPool *tab_mvf_pool;
     AVBufferPool *rpl_tab_pool;
 
-    SliceHeader sh;
-    SAOParams *sao;
-    DBParams *deblock;
-
     ///< candidate references for the current frame
     RefPicList rps[5];
 
+    SliceHeader sh;
+    SAOParams *sao;
+    DBParams *deblock;
     enum NALUnitType nal_unit_type;
     int temporal_id;  ///< temporal_id_plus1 - 1
     HEVCFrame *ref;
@@ -967,13 +970,6 @@ typedef struct HEVCContext {
     int nal_length_size;    ///< Number of bytes used for nal length (1, 2 or 4)
 
     int picture_struct;
-
-    /** 1 if the independent slice segment header was successfully parsed */
-    uint8_t slice_initialized;
-
-    uint8_t             threads_type;
-    uint8_t             threads_number;
-    int                 decode_checksum_sei;
 } HEVCContext;
 
 int ff_hevc_decode_short_term_rps(HEVCContext *s, ShortTermRPS *rps,
@@ -1044,6 +1040,7 @@ int ff_hevc_no_residual_syntax_flag_decode(HEVCContext *s);
 int ff_hevc_split_transform_flag_decode(HEVCContext *s, int log2_trafo_size);
 int ff_hevc_cbf_cb_cr_decode(HEVCContext *s, int trafo_depth);
 int ff_hevc_cbf_luma_decode(HEVCContext *s, int trafo_depth);
+int ff_hevc_transform_skip_flag_decode(HEVCContext *s, int c_idx);
 
 /**
  * Get the number of candidate references for the current frame.
@@ -1072,7 +1069,9 @@ void ff_hevc_luma_mv_mvp_mode(HEVCContext *s, int x0, int y0,
 void ff_hevc_set_qPy(HEVCContext *s, int xC, int yC, int xBase, int yBase,
                      int log2_cb_size);
 void ff_hevc_deblocking_boundary_strengths(HEVCContext *s, int x0, int y0,
-                                           int log2_trafo_size);
+                                           int log2_trafo_size,
+                                           int slice_or_tiles_up_boundary,
+                                           int slice_or_tiles_left_boundary);
 void ff_hevc_deblocking_boundary_strengths_h(HEVCContext *s, int x0, int y0,
                                            int slice_up_boundary);
 void ff_hevc_deblocking_boundary_strengths_v(HEVCContext *s, int x0, int y0,
@@ -1082,9 +1081,6 @@ int ff_hevc_cu_qp_delta_abs(HEVCContext *s);
 void ff_hevc_hls_filter(HEVCContext *s, int x, int y);
 void ff_hevc_hls_filters(HEVCContext *s, int x_ctb, int y_ctb, int ctb_size);
 void ff_hevc_hls_residual_coding(HEVCContext *s, int x0, int y0,
-                                 int log2_trafo_size, enum ScanType scan_idx,
-                                 int c_idx);
-void ff_hevc_hls_residual_coding_luma(HEVCContext *s, int x0, int y0,
                                  int log2_trafo_size, enum ScanType scan_idx,
                                  int c_idx);
 

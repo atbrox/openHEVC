@@ -445,7 +445,6 @@ void pred_angular_1_8_sse(uint8_t *_src, const uint8_t *_top, const uint8_t *_le
 
         int i;
         __m128i r0, r1, r2, r3;
-        const __m128i mask2   = _mm_set_epi32(0,255,-1,-1);
         const __m128i add     = _mm_set1_epi16(16);
         const uint8_t *src1;
         const uint8_t *src2;
