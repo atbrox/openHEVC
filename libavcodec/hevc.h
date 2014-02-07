@@ -894,6 +894,7 @@ typedef struct HEVCContext {
     int bs_height;
 
     int is_decoded;
+    int decode_checksum_sei;
 
     HEVCPredContext hpc;
     HEVCDSPContext hevcdsp;
