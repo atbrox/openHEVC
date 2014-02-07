@@ -151,16 +151,15 @@ void ff_hevcdsp_init_x86(HEVCDSPContext *c, const int bit_depth)
                     c->put_hevc_epel[1][1] = ff_put_hevc_epel_hv_4_8_sse4;
 
 #else
-                    c->put_hevc_epel[0][0] = ff_hevc_put_hevc_epel_pixels_8_sse;
-                    c->put_hevc_epel[0][1] = ff_hevc_put_hevc_epel_h_8_sse;
-                    c->put_hevc_epel[1][0] = ff_hevc_put_hevc_epel_v_8_sse;
-                    c->put_hevc_epel[1][1] = ff_hevc_put_hevc_epel_hv_8_sse;
+                    c->put_hevc_epel[0][0][0] = c->put_hevc_epel[1][0][0] = c->put_hevc_epel[2][0][0] = c->put_hevc_epel[3][0][0] = c->put_hevc_epel[4][0][0] = ff_hevc_put_hevc_epel_pixels_8_sse;
+                    c->put_hevc_epel[0][0][1] = c->put_hevc_epel[1][0][1] = c->put_hevc_epel[2][0][1] = c->put_hevc_epel[3][0][1] = c->put_hevc_epel[4][0][1] = ff_hevc_put_hevc_epel_h_8_sse;
+                    c->put_hevc_epel[0][1][0] = c->put_hevc_epel[1][1][0] = c->put_hevc_epel[2][1][0] = c->put_hevc_epel[3][1][0] = c->put_hevc_epel[4][1][0] = ff_hevc_put_hevc_epel_v_8_sse;
+                    c->put_hevc_epel[0][1][1] = ff_hevc_put_hevc_epel_hv_8_2_sse;
+                    c->put_hevc_epel[1][1][1] = ff_hevc_put_hevc_epel_hv_8_4_sse;
+                    c->put_hevc_epel[2][1][1] = c->put_hevc_epel[3][1][1] = c->put_hevc_epel[4][1][1] = ff_hevc_put_hevc_epel_hv_8_8_sse;
 
 
 #endif
-
-
-                    c->put_hevc_epel[1][1] = ff_hevc_put_hevc_epel_hv_8_sse;
 
                 	c->transform_skip= ff_hevc_transform_skip_8_sse;
                 	c->sao_edge_filter[0] = ff_hevc_sao_edge_filter_0_8_sse;
@@ -222,10 +221,10 @@ void ff_hevcdsp_init_x86(HEVCDSPContext *c, const int bit_depth)
                     c->transform_add[2] = ff_hevc_transform_16x16_add_10_sse4;
                     c->transform_add[3] = ff_hevc_transform_32x32_add_10_sse4;
 
-                    c->put_hevc_epel[0][0] = ff_hevc_put_hevc_epel_pixels_10_sse;
-                    c->put_hevc_epel[0][1] = ff_hevc_put_hevc_epel_h_10_sse;
-                    c->put_hevc_epel[1][0] = ff_hevc_put_hevc_epel_v_10_sse;
-                    c->put_hevc_epel[1][1] = ff_hevc_put_hevc_epel_hv_10_sse;
+//                    c->put_hevc_epel[0][0] = ff_hevc_put_hevc_epel_pixels_10_sse;
+//                    c->put_hevc_epel[0][1] = ff_hevc_put_hevc_epel_h_10_sse;
+//                    c->put_hevc_epel[1][0] = ff_hevc_put_hevc_epel_v_10_sse;
+//                    c->put_hevc_epel[1][1] = ff_hevc_put_hevc_epel_hv_10_sse;
 
 //                    c->put_hevc_qpel[0][0][0] = c->put_hevc_qpel[1][0][0] = c->put_hevc_qpel[2][0][0] = c->put_hevc_qpel[3][0][0] = c->put_hevc_qpel[4][0][0] = ff_hevc_put_hevc_qpel_pixels_10_sse;
 //                    c->put_hevc_qpel[0][0][1] = c->put_hevc_qpel[1][0][1] = c->put_hevc_qpel[2][0][1] = c->put_hevc_qpel[3][0][1] = c->put_hevc_qpel[4][0][1] = ff_hevc_put_hevc_qpel_h_1_10_sse;
