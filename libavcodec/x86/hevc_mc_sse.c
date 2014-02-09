@@ -2557,7 +2557,6 @@ void ff_hevc_put_hevc_qpel_pixels_10_sse(int16_t *dst, ptrdiff_t dststride,
 
 }
 
-
 void ff_hevc_put_hevc_qpel_h8_1_v_1_sse(int16_t *dst, ptrdiff_t dststride,
                                         uint8_t *_src, ptrdiff_t _srcstride, int width, int height) {
     int x, y;
@@ -2617,12 +2616,16 @@ void ff_hevc_put_hevc_qpel_h8_1_v_1_sse(int16_t *dst, ptrdiff_t dststride,
 
     const __m128i c1 = _mm_set1_epi16( -1);
     const __m128i c2 = _mm_set1_epi16(  4);
+    // c1 = _mm_unpacklo_epi16(c1, c2);
     const __m128i c3 = _mm_set1_epi16(-10);
     const __m128i c4 = _mm_set1_epi16( 58);
+    // c2 = _mm_unpacklo_epi16(c3, c4);
     const __m128i c5 = _mm_set1_epi16( 17);
     const __m128i c6 = _mm_set1_epi16( -5);
+    // c3 = _mm_unpacklo_epi16(c5, c6);
     const __m128i c7 = _mm_set1_epi16(  1);
     const __m128i c8 = _mm_setzero_si128();
+    // c4 = _mm_unpacklo_epi16(c7, c8);
 
     for (y = 0; y < height; y++) {
         for (x = 0; x < width; x += 8) {
@@ -2636,6 +2639,41 @@ void ff_hevc_put_hevc_qpel_h8_1_v_1_sse(int16_t *dst, ptrdiff_t dststride,
             x6 = _mm_load_si128((__m128i *) &tmp[x + 2 * MAX_PB_SIZE]);
             x7 = _mm_load_si128((__m128i *) &tmp[x + 3 * MAX_PB_SIZE]);
             x8 = _mm_load_si128((__m128i *) &tmp[x + 4 * MAX_PB_SIZE]);
+
+            // t1 = _mm_unpacklo_epi16(x1, x2);
+            // x1 = _mm_unpackhi_epi16(x1, x2);
+            // t1 = _mm_madd_epi16(t1, c1);
+            // x1 = _mm_madd_epi16(x1, c1);
+
+            // t2 = _mm_unpacklo_epi16(x3, x4);
+            // x2 = _mm_unpackhi_epi16(x3, x4);
+            // t2 = _mm_madd_epi16(t2, c2);
+            // x2 = _mm_madd_epi16(x2, c2);
+
+            // t3 = _mm_unpacklo_epi16(x5, x6);
+            // x3 = _mm_unpackhi_epi16(x5, x6);
+            // t3 = _mm_madd_epi16(t3, c3);
+            // x3 = _mm_madd_epi16(x3, c3);
+
+            // t4 = _mm_unpacklo_epi16(x7, x8);
+            // x4 = _mm_unpackhi_epi16(x7, x8);
+            // t3 = _mm_madd_epi16(t4, c4);
+            // x3 = _mm_madd_epi16(x4, c4);
+
+
+            // t1 = _mm_add_epi32(t1, t2);
+            // t3 = _mm_add_epi32(t3, t4);
+            // t1 = _mm_add_epi32(t1, t3);
+            // t1 = _mm_srai_epi32(t1, 6);
+
+
+            // x1 = _mm_add_epi32(x1, x2);
+            // x3 = _mm_add_epi32(x3, x4);
+            // x1 = _mm_add_epi32(x1, x3);
+            // x1 = _mm_srai_epi32(x1, 6);
+
+            // t0 = _mm_packs_epi32(t0, t1);
+
 
             m1 = _mm_mullo_epi16(x1, c1);
             m2 = _mm_mulhi_epi16(x1, c1);
