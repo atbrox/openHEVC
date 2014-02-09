@@ -47,6 +47,27 @@ static const uint8_t qpel_h_filter_2_8[16] = { -1, 4,-11, 40, 40,-11, 4, -1, -1,
 
 static const uint8_t qpel_h_filter_3_8[16] = {  0, 1, -5, 17, 58,-10, 4, -1,  0, 1, -5, 17, 58,-10, 4, -1};
 
+static const uint8_t qpel_hv_filter_1_8[16 * 4] = {
+     -1,  4, -1,  4, -1,  4, -1,  4, -1,  4, -1,  4, -1,  4, -1,  4,
+    -10, 58,-10, 58,-10, 58,-10, 58,-10, 58,-10, 58,-10, 58,-10, 58,
+     17, -5, 17, -5, 17, -5, 17, -5, 17, -5, 17, -5, 17, -5, 17, -5,
+      1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0,  1,  0
+};
+
+static const uint8_t qpel_hv_filter_2_8[16 * 4] = {
+     -1,  4, -1,  4, -1,  4, -1,  4, -1,  4, -1,  4, -1,  4, -1,  4,
+    -11, 40,-11, 40,-11, 40,-11, 40,-11, 40,-11, 40,-11, 40,-11, 40,
+     40,-11, 40,-11, 40,-11, 40,-11, 40,-11, 40,-11, 40,-11, 40,-11,
+      4, -1,  4, -1,  4, -1,  4, -1,  4, -1,  4, -1,  4, -1,  4, -1,
+};
+
+static const uint8_t qpel_hv_filter_3_8[16 * 4] = {
+     0,   1,  0,   1,  0,   1,  0,   1,  0,   1,  0,   1,  0,   1,  0,   1,
+    -5,  17, -5,  17, -5,  17, -5,  17, -5,  17, -5,  17, -5,  17, -5,  17,
+    58, -10, 58, -10, 58, -10, 58, -10, 58, -10, 58, -10, 58, -10, 58, -10,
+     4,  -1,  4,  -1,  4,  -1,  4,  -1,  4,  -1,  4,  -1,  4,  -1,  4,  -1
+};
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -2547,41 +2568,45 @@ void ff_hevc_put_hevc_qpel_h8_1_v_1_sse(int16_t *dst, ptrdiff_t dststride,
     __m128i x1, x2, x3, x4, x5, x6, x7, x8, rBuffer, rTemp, r0, r1, r2, r3, r4;
     __m128i t1, t2, t3, t4, t5, t6, t7, t8;
     int shift = 14 - 8;
+    __m128i m0, m1,  m2,  m3,  m4,  m5,  m6,  m7;
+    __m128i m8, m9, m10, m11, m12, m13, m14, m15;
 
     src -= ff_hevc_qpel_extra_before[1] * srcstride;
-    r0 = _mm_set_epi8(0, 1, -5, 17, 58, -10, 4, -1, 0, 1, -5, 17, 58, -10, 4,
-                      -1);
+    m7  = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[0]);
+    m8  = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[16]);
+    m9  = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[32]);
+    m10 = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[48]);
 
     for (y = 0; y < height + ff_hevc_qpel_extra[1]; y++) {
         for (x = 0; x < width; x += 8) {
             /* load data in register     */
-            __m128i m0, m1, m2, m3, m4, m5, m6, m7;
             m0 = _mm_loadl_epi64((__m128i *) &src[x - 3]);
             m1 = _mm_loadl_epi64((__m128i *) &src[x - 2]);
             m2 = _mm_loadl_epi64((__m128i *) &src[x - 1]);
             m3 = _mm_loadl_epi64((__m128i *) &src[x]);
             m4 = _mm_loadl_epi64((__m128i *) &src[x + 1]);
             m5 = _mm_loadl_epi64((__m128i *) &src[x + 2]);
-            m6 = _mm_loadl_epi64((__m128i *) &src[x + 3]);
-            m7 = _mm_loadl_epi64((__m128i *) &src[x + 4]);
 
-            x2 = _mm_unpacklo_epi64(m0, m1);
-            x3 = _mm_unpacklo_epi64(m2, m3);
-            x4 = _mm_unpacklo_epi64(m4, m5);
-            x5 = _mm_unpacklo_epi64(m6, m7);
+            m0 = _mm_unpacklo_epi8(m0, m1);
+            m2 = _mm_unpacklo_epi8(m2, m3);
+            m1 = _mm_loadl_epi64((__m128i *) &src[x + 3]);
+            m3 = _mm_loadl_epi64((__m128i *) &src[x + 4]);
+
+            m4 = _mm_unpacklo_epi8(m4, m5);
+            m1 = _mm_unpacklo_epi8(m1, m3);
 
             /*  PMADDUBSW then PMADDW     */
-            x2 = _mm_maddubs_epi16(x2, r0);
-            x3 = _mm_maddubs_epi16(x3, r0);
-            x4 = _mm_maddubs_epi16(x4, r0);
-            x5 = _mm_maddubs_epi16(x5, r0);
-            x2 = _mm_hadd_epi16(x2, x3);
-            x4 = _mm_hadd_epi16(x4, x5);
-            x2 = _mm_hadd_epi16(x2, x4);
-            x2 = _mm_srli_si128(x2, BIT_DEPTH - 8);
+            m0 = _mm_maddubs_epi16(m0, m7);
+            m2 = _mm_maddubs_epi16(m2, m8);
+            m4 = _mm_maddubs_epi16(m4, m9);
+            m1 = _mm_maddubs_epi16(m1, m10);
+            m0 = _mm_add_epi16(m0, m2);
+            m4 = _mm_add_epi16(m4, m1);
+            m0 = _mm_add_epi16(m0, m4);
+            m0 = _mm_srai_epi32(m0, BIT_DEPTH - 8);
 
             /* give results back            */
-            _mm_store_si128((__m128i *) &tmp[x], x2);
+            _mm_store_si128((__m128i *) &tmp[x], m0);
 
         }
         src += srcstride;
@@ -2693,49 +2718,52 @@ void ff_hevc_put_hevc_qpel_h8_1_v_2_sse(int16_t *dst, ptrdiff_t dststride,
     int shift = 14 - 8;
 
     src -= ff_hevc_qpel_extra_before[2] * srcstride;
-    r0 = _mm_set_epi8(0, 1, -5, 17, 58, -10, 4, -1, 0, 1, -5, 17, 58, -10, 4,
-            -1);
+    r0 = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[0]);
+    r1 = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[16]);
+    r2 = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[32]);
+    r3 = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[48]);
 
-        for (y = 0; y < height + ff_hevc_qpel_extra[2]; y++) {
-            for (x = 0; x < width; x += 8) {
-                /* load data in register     */
-                __m128i m0, m1, m2, m3, m4, m5, m6, m7;
-                m0 = _mm_loadl_epi64((__m128i *) &src[x - 3]);
-                m1 = _mm_loadl_epi64((__m128i *) &src[x - 2]);
-                m2 = _mm_loadl_epi64((__m128i *) &src[x - 1]);
-                m3 = _mm_loadl_epi64((__m128i *) &src[x]);
-                m4 = _mm_loadl_epi64((__m128i *) &src[x + 1]);
-                m5 = _mm_loadl_epi64((__m128i *) &src[x + 2]);
-                m6 = _mm_loadl_epi64((__m128i *) &src[x + 3]);
-                m7 = _mm_loadl_epi64((__m128i *) &src[x + 4]);
-                x2 = _mm_unpacklo_epi64(m0, m1);
-                x3 = _mm_unpacklo_epi64(m2, m3);
-                x4 = _mm_unpacklo_epi64(m4, m5);
-                x5 = _mm_unpacklo_epi64(m6, m7);
+    for (y = 0; y < height + ff_hevc_qpel_extra[2]; y++) {
+        for (x = 0; x < width; x += 8) {
+            /* load data in register     */
+            __m128i m0, m1, m2, m3, m4, m5, m6, m7;
+            m0 = _mm_loadl_epi64((__m128i *) &src[x - 3]);
+            m1 = _mm_loadl_epi64((__m128i *) &src[x - 2]);
+            m2 = _mm_loadl_epi64((__m128i *) &src[x - 1]);
+            m3 = _mm_loadl_epi64((__m128i *) &src[x]);
+            m4 = _mm_loadl_epi64((__m128i *) &src[x + 1]);
+            m5 = _mm_loadl_epi64((__m128i *) &src[x + 2]);
+            m6 = _mm_loadl_epi64((__m128i *) &src[x + 3]);
+            m7 = _mm_loadl_epi64((__m128i *) &src[x + 4]);
 
-                /*  PMADDUBSW then PMADDW     */
-                x2 = _mm_maddubs_epi16(x2, r0);
-                x3 = _mm_maddubs_epi16(x3, r0);
-                x4 = _mm_maddubs_epi16(x4, r0);
-                x5 = _mm_maddubs_epi16(x5, r0);
-                x2 = _mm_hadd_epi16(x2, x3);
-                x4 = _mm_hadd_epi16(x4, x5);
-                x2 = _mm_hadd_epi16(x2, x4);
-                x2 = _mm_srai_epi16(x2, BIT_DEPTH - 8);
+            x2 = _mm_unpacklo_epi8(m0, m1);
+            x3 = _mm_unpacklo_epi8(m2, m3);
+            x4 = _mm_unpacklo_epi8(m4, m5);
+            x5 = _mm_unpacklo_epi8(m6, m7);
 
-                /* give results back            */
-                _mm_store_si128((__m128i *) &tmp[x], x2);
+            /*  PMADDUBSW then PMADDW     */
+            x2 = _mm_maddubs_epi16(x2, r0);
+            x3 = _mm_maddubs_epi16(x3, r1);
+            x4 = _mm_maddubs_epi16(x4, r2);
+            x5 = _mm_maddubs_epi16(x5, r3);
+            x2 = _mm_add_epi16(x2, x3);
+            x4 = _mm_add_epi16(x4, x5);
+            x2 = _mm_add_epi16(x2, x4);
+            x2 = _mm_srai_epi32(x2, BIT_DEPTH - 8);
 
-            }
-            src += srcstride;
-            tmp += MAX_PB_SIZE;
+            /* give results back            */
+            _mm_store_si128((__m128i *) &tmp[x], x2);
+
         }
+        src += srcstride;
+        tmp += MAX_PB_SIZE;
+    }
 
-        tmp = mcbuffer + ff_hevc_qpel_extra_before[2] * MAX_PB_SIZE;
-        srcstride = MAX_PB_SIZE;
+    tmp = mcbuffer + ff_hevc_qpel_extra_before[2] * MAX_PB_SIZE;
+    srcstride = MAX_PB_SIZE;
 
-        /* vertical treatment on temp table : tmp contains 16 bit values, so need to use 32 bit  integers
-         for register calculations */
+    /* vertical treatment on temp table : tmp contains 16 bit values, so need to use 32 bit  integers
+     for register calculations */
 
     const __m128i c0 = _mm_setzero_si128();
     const __m128i c1 = _mm_set1_epi16( -1);
@@ -2841,11 +2869,12 @@ void ff_hevc_put_hevc_qpel_h8_1_v_3_sse(int16_t *dst, ptrdiff_t dststride,
     int shift = 14 - 8;
 
     src -= ff_hevc_qpel_extra_before[3] * srcstride;
-    r0 = _mm_set_epi8(0, 1, -5, 17, 58, -10, 4, -1, 0, 1, -5, 17, 58, -10, 4,
-                      -1);
+    r0 = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[0]);
+    r1 = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[16]);
+    r2 = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[32]);
+    r3 = _mm_load_si128((__m128i*) &qpel_hv_filter_1_8[48]);
 
-
-    for (y = 0; y < height + ff_hevc_qpel_extra[3]; y ++) {
+    for (y = 0; y < height + ff_hevc_qpel_extra[3]; y++) {
         for (x = 0; x < width; x += 8) {
             /* load data in register     */
             __m128i m0, m1, m2, m3, m4, m5, m6, m7;
@@ -2857,20 +2886,21 @@ void ff_hevc_put_hevc_qpel_h8_1_v_3_sse(int16_t *dst, ptrdiff_t dststride,
             m5 = _mm_loadl_epi64((__m128i *) &src[x + 2]);
             m6 = _mm_loadl_epi64((__m128i *) &src[x + 3]);
             m7 = _mm_loadl_epi64((__m128i *) &src[x + 4]);
-            x2 = _mm_unpacklo_epi64(m0, m1);
-            x3 = _mm_unpacklo_epi64(m2, m3);
-            x4 = _mm_unpacklo_epi64(m4, m5);
-            x5 = _mm_unpacklo_epi64(m6, m7);
+
+            x2 = _mm_unpacklo_epi8(m0, m1);
+            x3 = _mm_unpacklo_epi8(m2, m3);
+            x4 = _mm_unpacklo_epi8(m4, m5);
+            x5 = _mm_unpacklo_epi8(m6, m7);
 
             /*  PMADDUBSW then PMADDW     */
             x2 = _mm_maddubs_epi16(x2, r0);
-            x3 = _mm_maddubs_epi16(x3, r0);
-            x4 = _mm_maddubs_epi16(x4, r0);
-            x5 = _mm_maddubs_epi16(x5, r0);
-            x2 = _mm_hadd_epi16(x2, x3);
-            x4 = _mm_hadd_epi16(x4, x5);
-            x2 = _mm_hadd_epi16(x2, x4);
-            x2 = _mm_srai_epi16(x2, BIT_DEPTH - 8);
+            x3 = _mm_maddubs_epi16(x3, r1);
+            x4 = _mm_maddubs_epi16(x4, r2);
+            x5 = _mm_maddubs_epi16(x5, r3);
+            x2 = _mm_add_epi16(x2, x3);
+            x4 = _mm_add_epi16(x4, x5);
+            x2 = _mm_add_epi16(x2, x4);
+            x2 = _mm_srai_epi32(x2, BIT_DEPTH - 8);
 
             /* give results back            */
             _mm_store_si128((__m128i *) &tmp[x], x2);
