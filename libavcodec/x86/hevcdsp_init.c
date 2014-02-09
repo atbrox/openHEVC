@@ -182,7 +182,7 @@ void ff_hevcdsp_init_x86(HEVCDSPContext *c, const int bit_depth)
                     c->put_hevc_qpel[1][2][1] = c->put_hevc_qpel[2][2][1] = c->put_hevc_qpel[3][2][1] = c->put_hevc_qpel[4][2][1] = ff_hevc_put_hevc_qpel_h8_1_v_2_sse;
                     c->put_hevc_qpel[0][1][2] = ff_hevc_put_hevc_qpel_h4_2_v_1_sse;
                     c->put_hevc_qpel[1][1][2] = c->put_hevc_qpel[2][1][2] = c->put_hevc_qpel[3][1][2] = c->put_hevc_qpel[4][1][2] = ff_hevc_put_hevc_qpel_h8_2_v_1_sse;
-                    c->put_hevc_qpel[0][3][1] = ff_hevc_put_hevc_qpel_h8_1_v_3_sse;
+                    c->put_hevc_qpel[0][3][1] = ff_hevc_put_hevc_qpel_h4_1_v_3_sse;
                     c->put_hevc_qpel[1][3][1] = c->put_hevc_qpel[2][3][1] = c->put_hevc_qpel[3][3][1] = c->put_hevc_qpel[4][3][1] = ff_hevc_put_hevc_qpel_h8_1_v_3_sse;
                     c->put_hevc_qpel[0][1][3] = ff_hevc_put_hevc_qpel_h4_3_v_1_sse;
                     c->put_hevc_qpel[1][1][3] = c->put_hevc_qpel[2][1][3] = c->put_hevc_qpel[3][1][3] = c->put_hevc_qpel[4][1][3] = ff_hevc_put_hevc_qpel_h8_3_v_1_sse;
