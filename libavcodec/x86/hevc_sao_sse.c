@@ -52,8 +52,6 @@ void ff_hevc_sao_band_filter_0_8_sse(uint8_t *_dst, uint8_t *_src,
     __m128i r0, r1, r2, r3, x0, x1, x2, x3, sao1, sao2, sao3, sao4, src0, src1,
     src2, src3;
 
-    if (!borders[3])
-        height -= ((4 >> chroma) + 2);
     dst = dst + (init_y * _stride + init_x);
     src = src + (init_y * _stride + init_x);
 
@@ -530,8 +528,8 @@ void ff_hevc_sao_edge_filter_0_8_sse(uint8_t *_dst, uint8_t *_src,
     cmp1, r0, r1, r2, r3, r4;
     int save_upper_left;
 
-    if (!borders[3])
-        height -= ((4 >> chroma) + 2);
+//    if (!borders[3])
+//        height -= ((4 >> chroma) + 2);
     dst = dst + (init_y * _stride + init_x);
     src = src + (init_y * _stride + init_x);
     init_y = init_x = 0;
@@ -590,7 +588,7 @@ void ff_hevc_sao_edge_filter_0_8_sse(uint8_t *_dst, uint8_t *_src,
             for (y = init_y; y < height; y++) {
                 for (x = init_x; x < width; x += 16) {
 
-                    x0 = _mm_loadu_si128((__m128i *) (src + x + y_stride));
+                    x0 = _mm_load_si128((__m128i *) (src + x + y_stride));
                     cmp0 = _mm_loadu_si128((__m128i *) (src + x + y_stride_0_1));
                     cmp1 = _mm_loadu_si128((__m128i *) (src + x + y_stride_1_1));
 
@@ -632,7 +630,7 @@ void ff_hevc_sao_edge_filter_0_8_sse(uint8_t *_dst, uint8_t *_src,
                     r1 = _mm_add_epi16(r2, r4);
                     r0 = _mm_packus_epi16(r0, r1);
 
-                    _mm_storeu_si128((__m128i *) (dst + x + y_stride), r0);
+                    _mm_store_si128((__m128i *) (dst + x + y_stride), r0);
                 }
                 y_stride += stride;
                 y_stride_0_1 += stride;
